@@ -1,0 +1,24 @@
+<apex:page controller="YouTubeSearchController">
+    <!--https://developer.salesforce.com/forums#!/feedtype=SINGLE_QUESTION_SEARCH_RESULT&id=906F0000000AVJGIA4-->
+    <apex:form >
+        <apex:pageBlock title="Search YouTube">
+            <apex:inputText value="{!searchText}" />
+            <apex:commandButton action="{!search}" value="Search" />
+        </apex:pageBlock>
+        <apex:pageMessages />
+        <apex:pageBlock rendered="{!items != null}">
+            <apex:pageBlockTable value="{!items}" var="item" rowClasses="odd,even" styleClass="tableClass">
+                <apex:column >
+                    <apex:facet name="header">Title</apex:facet>
+                    <!--<apex:outputLink value="http://www.youtube.com/watch?v={!item.id.videoId}" target="_blank">{!item.snippet.title}</apex:outputLink>-->
+                    <!--<apex:outputLink value="http://www.youtube.com/embed/{!item.id.videoId}" target="_blank">{!item.snippet.title}</apex:outputLink>-->
+                    <apex:iframe src="https://www.youtube.com/embed/{!item.id.videoId}" id="theIframe"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">Description</apex:facet>
+                    <apex:outputText value="{!item.snippet.description}"/>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

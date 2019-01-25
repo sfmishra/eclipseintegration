@@ -1,0 +1,29 @@
+<apex:page standardController="Account" extensions="AccountRedirectionController" action="{!redirectToStandardpage}">
+	<apex:pageBlock >
+    	<apex:pageBlockSection title="Account Detail" columns="2">
+        	<apex:outputField value="{!account.Name}"/>
+            <apex:outputField value="{!account.Type}"/>
+            <apex:outputField value="{!account.Industry}" />
+            <apex:outputField value="{!account.AnnualRevenue}" />
+            <apex:outputField value="{!account.Rating}" />
+            <apex:outputField value="{!account.Phone}" />
+            <apex:outputField value="{!account.Fax}" />
+            <apex:outputField value="{!account.Website}" />
+        </apex:pageBlockSection>
+        <apex:pageBlockSection title="Account Address" columns="2">
+            <apex:outputField value="{!account.BillingStreet}"/>
+        	<apex:outputField value="{!account.BillingCity}"/>
+            <apex:outputField value="{!account.BillingState}"/>
+            <apex:outputField value="{!account.BillingCountry}"/>
+            <apex:outputField value="{!account.ShippingStreet}"/>
+            <apex:outputField value="{!account.ShippingCity}"/>
+            <apex:outputField value="{!account.ShippingState}"/>
+            <apex:outputField value="{!account.ShippingCountry}"/>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection title="SLA Details" columns="2">
+            <apex:outputField value="{!account.SLA__c}"/>
+            <apex:outputField value="{!account.SLAExpirationDate__c}"/>
+            <apex:outputField value="{!account.SLASerialNumber__c}"/>
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+</apex:page>

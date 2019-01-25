@@ -1,0 +1,28 @@
+<apex:page controller="LookupController">
+    <apex:includeLightning />
+    <div id="lightningLookup" />
+    
+    <Script>
+    	
+        function initLookup() {
+        
+        $Lightning.use("c:LookupContainer", function () {
+          $Lightning.createComponent("c:Lookup", {
+            recordId: "{!contact.AccountId}",
+            label: "Account",
+            pluralLabel: "Accounts",
+            sObjectAPIName: "Account",
+            listIconSVGPath: "/resource/SLDS0110/assets/icons/standard-sprite/svg/symbols.svg#account",
+            listIconClass: "slds-icon-standard-account",
+            callback: function(){ alert('done!'); },
+            filter: " WHERE Name = 'Some Name' ",
+            required: required
+          }, 'account_lookup', function (cmp) {});
+        });
+      }
+      
+      initLookup();
+        
+    </Script>
+    
+</apex:page>

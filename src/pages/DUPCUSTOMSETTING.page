@@ -1,0 +1,6 @@
+<apex:page controller="insertcustomsettings_ctl" > 
+<apex:form > 
+<apex:commandButton value="Set custom setting(long)" action="{!SetCustomesettinglong}"/> 
+<apex:commandButton value="Set custom setting" action="{!SetCustomesetting}"/> 
+</apex:form> 
+</apex:page>

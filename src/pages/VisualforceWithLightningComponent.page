@@ -1,0 +1,23 @@
+<apex:page controller="opportunityListController">
+    <apex:includeLightning />
+    <div id="lightningContainer" />
+    <div id="LcDisplayId" />
+    {!oppList[0].Name}
+    <script>
+    $Lightning.use("c:LightningForVisualforceApp", function(){
+        $Lightning.createComponent("c:LightningForVisualforce", 
+                                   {
+                                       accId : '{!$CurrentPage.parameters.recId}',
+                                       opportunityList : '{!oppList}'
+                                   },
+                                   "lightningContainer",
+                                   function(component) {
+                                       component.set("v.accId" , '{!$CurrentPage.parameters.recId}');
+                                       component.set("opportunityList",'{!oppList}');
+                                   });
+                                   
+        });
+    console.log(' @@@ ' + '{!$CurrentPage.parameters.recId}');
+        </script>
+
+</apex:page>
