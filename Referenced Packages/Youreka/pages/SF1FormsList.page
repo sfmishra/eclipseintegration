@@ -1,0 +1,57 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" applyHtmlTag="false" controller="disco.Ctl_SF1FormsList" docType="html-5.0">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <head>
+        <Title>Mobile Forms</Title>
+        <apex:styleSheet value="{!URLFOR($Resource.disco__SLDS100, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+        <apex:includeScript value="{!$Resource.disco__jquery2_0_0}"/>
+        <style>
+            .slds button.mobile-button {
+                width: 100%;
+                min-height: 50px;
+                text-align: left;
+                margin-top: 20px;
+                font-size: 18px;
+            }
+        </style>
+        <script>
+            var sfEnv = {};
+            sfEnv.namespace = '{!JSENCODE(namespace)}';
+        </script>
+    </head>
+    <body>
+        <apex:form >
+            <div class="slds">
+                <h1 class="slds-page-header__title">Youreka Mobile Forms:</h1>
+                <div class="rows"></div>
+            </div>
+        </apex:form>
+        <script>
+            var sldsLink = "{!URLFOR($Resource.disco__SLDS100)}";
+            $(document).ready(function(){
+                function buttonClick(id) {
+                    sforce.one.navigateToURL('/apex/'+sfEnv.namespace+'CompleteForm?id='+id); 
+                }
+
+                var mobileForms  = JSON.parse('{!JSENCODE(queryAllMobileForms)}');
+                var buttonRows = '';
+                mobileForms.forEach(function(form) {
+                    var row =   '<div>'+
+                                    '<button data-id="'+form.Id+'" type="button" class="mobile-button slds-button slds-button--neutral">'+
+                                        '<svg aria-hidden="true" class="slds-button__icon slds-button__icon--left slds-icon--medium">'+
+                                            '<use xlink:href="'+sldsLink+'/assets/icons/utility-sprite/svg/symbols.svg#edit_form"></use>'+
+                                        '</svg>'+
+                                        form[sfEnv.namespace+'Form_Template__r'].Name+ ' - ' + form.Name+
+                                    '</button>'+
+                                '</div>';
+                    buttonRows += row;
+                });
+                $('.rows').append(buttonRows);
+                $('button').on('click', function() {
+                    var id = $(this).data('id');
+                    buttonClick(id);
+                });
+            });
+        </script>
+    </body>
+</html>
+</apex:page>

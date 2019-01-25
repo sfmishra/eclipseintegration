@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <description>user preferences for youreka</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Hide_Disco_Rules_Group_Intro__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>hides discovery rules group page into text</description>
+        <externalId>false</externalId>
+        <inlineHelpText>hides discovery rules group page into text</inlineHelpText>
+        <label>Hide Discovery Rules Group Intro</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Hide_Disco_Rules_Intro__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>hides discovery rules page into text</description>
+        <externalId>false</externalId>
+        <inlineHelpText>hides discovery rules page into text</inlineHelpText>
+        <label>Hide Discovery Rules Intro</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Hide_Form_Builder_Intro__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>hides intro text on the first page of the form builder</description>
+        <externalId>false</externalId>
+        <inlineHelpText>hides intro text on the first page of the form builder</inlineHelpText>
+        <label>Hide Form Builder Intro</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Hide_Simple_Disco_Intro__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>hides simple discovery page into text</description>
+        <externalId>false</externalId>
+        <inlineHelpText>hides simple discovery page into text</inlineHelpText>
+        <label>Hide Simple Discovery Rules Intro</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Show_Advanced_Features__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Allows users to create linked sections and use discoveries.</description>
+        <externalId>false</externalId>
+        <label>Show Advanced Features</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>User Preferences</label>
+    <visibility>Public</visibility>
+</CustomObject>

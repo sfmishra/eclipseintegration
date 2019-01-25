@@ -1,0 +1,156 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" showQuickActionVfHeader="false" controller="disco.Ctl_CompleteForm"
+	action="{!checkForForm}">
+<head>
+	<title>{!formName}</title>
+	<apex:includeScript value="/support/console/35.0/integration.js"/>
+	<apex:includeScript value="{!$Resource.disco__jquery2_0_0}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__esig, 'sigpad/assets/json2.min.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__jqueryUI1_11_2, 'jquery-ui.min.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__esig, 'sigpad/jquery.signaturepad.js')}"/>
+	<apex:includeScript value="{!$Resource.disco__bootstraptransition}"/>
+	<apex:includeScript value="{!$Resource.disco__bootstrapcollapse}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__bootstrap3, 'js/bootstrap.min.js')}" />
+	<apex:includeScript value="{!$Resource.disco__momentJS}"/>
+	<apex:includeScript value="{!$Resource.disco__timepicker}"/>
+	<!-- 
+	Spec Runner Files 
+		<apex:styleSheet value="{!URLFOR($Resource.jasmine_lib, 'lib/jasmine-2.3.4/jasmine.css')}"/>
+		
+		<apex:includeScript value="{!URLFOR($Resource.jasmine_lib, 'lib/jasmine-2.3.4/jasmine.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.jasmine_lib, 'lib/jasmine-2.3.4/jasmine-html.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.jasmine_lib, 'lib/jasmine-2.3.4/boot.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.jasmine_lib, 'lib/jasmine-2.3.4/drew-addons/jquery-2.0.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.jasmine_lib, 'lib/jasmine-2.3.4/drew-addons/jasmine-jquery.js')}"/>
+	--> 
+ 	
+	<apex:styleSheet value="{!URLFOR($Resource.disco__bootstrap3, 'css/bootstrap.min.css')}" />
+	<apex:styleSheet value="{!$Resource.disco__completeFormCSS}"/>
+	<apex:styleSheet value="{!$Resource.disco__forms_css}"/>
+	<apex:styleSheet value="{!$Resource.disco__datetimepickercss}"/>
+	
+	<apex:styleSheet value="{!URLFOR($Resource.disco__SLDS100, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+
+	<script>
+	// global object used to store Salesforce environment variables 
+	var sfEnv = {};
+	sfEnv.VFR = {};
+	sfEnv.sfTheme = '{!JSENCODE(userTheme)}';
+	sfEnv.VFR.queryAllForms = '{!JSENCODE($RemoteAction.Ctl_CompleteForm.queryAllForms)}';
+	sfEnv.VFR.saveAllAnswers = '{!JSENCODE($RemoteAction.Ctl_CompleteForm.updateAllAnswers)}';
+	sfEnv.VFR.findMatchingLookupRecords = '{!JSENCODE($RemoteAction.Ctl_CompleteForm.findMatchingRecords)}';
+	sfEnv.VFR.savePhoto = '{!JSENCODE($RemoteAction.Ctl_CompleteForm.uploadAttachment)}';
+	sfEnv.thisForm = JSON.parse('{!JSENCODE(thisFormJSON)}');
+	sfEnv.namespace = '{!JSENCODE(namespace)}';
+	sfEnv.isFormDetail = false; // 'false' on CompleteForm.page, 'true' on FormDetail.page
+	sfEnv.isPreview = false; // 'false' on CompleteForm.page, 'true' on TemplateBuilder.page
+	sfEnv.isConsole = (sforce !== undefined && sforce.hasOwnProperty('console') && sforce.console.isInConsole()) ? true : false;
+	sfEnv.isLightningExp = (sforce !== undefined && sforce.hasOwnProperty('one')) ? true : false;
+	sfEnv.isSF1 = sfEnv.sfTheme === 'Theme4t' ? true : false; 
+	sfEnv.SLDS_PATH = '{!JSENCODE($Resource.SLDS100)}';
+   	sfEnv.countryPickLists = '{!JSENCODE(IF(countryPickListsOn,"true","false"))}' == "true" ? true : false;
+
+	/*** Made global for mobile ***/
+	sfEnv.isMobileApp = false; 
+	sfEnv.fieldLinkUpdateArray = [];
+    sfEnv.sf1HeaderColor = '{!JSENCODE(IF(sf1HeaderColor!=null, sf1HeaderColor,"rgba(22, 50, 92,.95)"))}';
+    sfEnv.sf1HeaderText = '{!JSENCODE(IF(sf1HeaderText!=null, sf1HeaderText,"#fff"))}';
+    sfEnv.sf1RedirectId;
+	/******/
+
+
+	</script>
+
+	<style>
+		.bootstrap-datetimepicker-widget{left:80px !important;}
+
+		.bootstrap-datetimepicker-widget .btn {
+			border:0;
+			background:none;
+		}
+		.bootstrap-datetimepicker-widget .btn-primary {
+			background:#006dcc;
+			color:white;
+		}
+		/* keeps inputs on the same row as required bar when required present */
+		.controls {
+			display:flex;
+		}
+		.controls-table tr td {
+			display:flex;
+		}
+	</style>
+</head>
+<body id="complete-form">
+	<div class="slds {!JSENCODE(userTheme)}">
+		<apex:pageMessages />
+
+		<apex:outputPanel rendered="{!yourekaDisabled}">
+			<c:YourekaDisabled messageText="{!yourekaDisabledMessage}"/>
+		</apex:outputPanel>
+
+		<apex:outputPanel rendered="{!NOT(yourekaDisabled)}">
+			<div class="containerBox container" id="completeFormPage" >
+				<!-- Saving Modal -->
+				<div id="savingStatus" class="slds-modal slds-fade-in-open" aria-hidden="false" role="dialog" style="display:none;">
+					<div class="slds-modal__container">
+						<div class="slds-modal__content slds-p-around--medium OR-modal__content">
+							<div class="slds-spinner--large OR-spinner-align--center slds-m-top--large">
+					          <img src="{!JSENCODE($Resource.SLDS100) + '/assets/images/spinners/slds_spinner_brand.gif'}" alt="Saving..." />
+					        </div>
+					        <h3 class="saveText modal-title slds-text-heading--medium slds-m-top--large slds-text-align--center slds-m-bottom--large"></h3>
+						</div>
+					</div>
+				</div>
+				<div class="slds-backdrop slds-backdrop--closed"></div>
+				<!-- END Saving Modal -->
+				
+				<form class="form-horizontal" id="mainForm">
+					<div class="buttons-fixed">
+						<apex:outputPanel layout="none" rendered="{!thisForm.Form_Template__r.disco__Status__c != 'Preview'}">
+							<div class="nav-container">
+								<div class="pagination-container js-pagination-container"></div>
+								<!-- fom error summary -->
+							</div>
+							<div class="error errorSummary slds-box--small slds-box slds-theme--shade slds-theme--alert-texture slds-m-top--small" style="display:none;">
+								<span></span>
+							</div>
+						</apex:outputPanel>
+						<!-- If preview, add buttons-fixed div so pagination can be appended (if necessary) -->
+						<apex:outputPanel layout="none" rendered="{!thisForm.Form_Template__r.disco__Status__c = 'Preview'}">
+							<div class="buttons buttons-fixed" style="height: 60px;"></div>
+						</apex:outputPanel>
+					</div>
+					<div class="currentPageContainer">
+						<div class="save-error-buffer"></div>
+						
+						<!-- warning message if premium will expire -->
+						<c:PremiumExpiration />
+						
+						<apex:outputPanel layout="none" rendered="{!NOT(ISNULL(saveError))}">
+							<div class="slds-text-heading--medium slds-m-vertical--medium slds-box slds-box slds-theme--shade" >
+								<h1 style="color:red;"><apex:outputText value="{!saveError}"/></h1>
+							</div>
+						</apex:outputPanel>
+						<div class="slds-box slds-theme--info slds-theme--alert-texture slds-m-top--medium" role="alert" id='loadingMessage'>
+							<h2>Loading...</h2>
+						</div>
+						<div class="slds-box slds-theme--error slds-theme--alert-texture slds-m-top--medium slds-m-bottom--x-large js-no-sections" role="alert" style="display:none;">
+							<h2>No sections added to this form.</h2>
+						</div>
+						<div id="formContent">
+							<!-- javascript inserts form content -->
+						</div>
+						
+					</div>
+				</form>
+			</div>
+		</apex:outputPanel>
+	</div>
+	<script type='text/javascript' src='{!$Resource.sf1Custom_js}'></script>
+	<script type='text/javascript' src='{!$Resource.formDisplayAppBundle_js}'></script>
+	<!--Using apex:include loads the file too quickly -->
+	<!-- <script src="https://localhost:9005/formDisplayApp/dist/bundle.js"></script> -->
+	<!-- <script src="http://localhost:9005/formDisplayApp/dist/__tests__/bundle.js"></script>  -->
+</body>
+	
+</apex:page>

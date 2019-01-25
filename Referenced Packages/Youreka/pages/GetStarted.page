@@ -1,0 +1,5 @@
+<apex:page showHeader="true" sidebar="true" tabStyle="get_started__tab">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<c:RemoteSiteBuilder />
+</html>
+</apex:page>

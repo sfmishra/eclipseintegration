@@ -1,0 +1,20 @@
+<apex:page showHeader="true" sidebar="true" standardcontroller="disco__Form_Template__c" extensions="disco.Ctl_NewFormTemplateRedirect">
+<script>
+var isLightningExp = typeof sforce !== 'undefined'; // navigation with the possibility of LightingExp 
+var namespace = '{!JSENCODE(namespace)}';
+
+/* create a new template and redirect */
+Visualforce.remoting.Manager.invokeAction(  
+	'{!JSENCODE($RemoteAction.Ctl_NewFormTemplateRedirect.createNewTemplate)}',
+	function(result, event) {
+		if (isLightningExp) {
+			sforce.one.navigateToURL('/apex/'+ namespace +'TemplateBuilder?templateID='+result+'&newForm=true');
+		} 
+		else {
+			window.location.href='/apex/'+namespace+'TemplateBuilder?templateID='+result+'&newForm=true';
+		}
+	}
+);
+</script>
+	
+</apex:page>

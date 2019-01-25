@@ -1,0 +1,529 @@
+<apex:page showHeader="true" sidebar="true" standardcontroller="disco__Form__c" extensions="disco.Ctl_FormDetail" action="{!ensureForm}">
+<head>
+	<title>{!formName}</title>
+	<apex:includeScript value="/support/console/35.0/integration.js"/>
+	<apex:includeScript value="{!$Resource.disco__jquery2_0_0}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__esig, 'sigpad/assets/json2.min.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__jqueryUI1_11_2, 'jquery-ui.min.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__esig, 'sigpad/jquery.signaturepad.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__jquerymodal, '/jquerymodal/jquery.modal.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__lightgallery, '/lightgallery/js/lightgallery-all.js')}"/>
+	
+ 	<apex:styleSheet value="{!URLFOR($Resource.disco__bootstrap3, 'css/bootstrap.min.css')}" />
+ 	<apex:styleSheet value="{!$Resource.disco__completeFormCSS}"/>
+ 	<apex:styleSheet value="{!$Resource.disco__forms_css}"/>
+	<apex:styleSheet value="{!URLFOR($Resource.disco__lightgallery, '/lightgallery/css/lightgallery.css')}" />
+	
+	<apex:styleSheet value="{!URLFOR($Resource.disco__SLDS100, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+
+
+    <script>
+	var sfEnv = {};
+	sfEnv.VFR = {};
+	sfEnv.VFR.queryAllForms = '{!$RemoteAction.Ctl_FormDetail.queryAllForms}';
+	sfEnv.VFR.saveAllAnswers = '{!$RemoteAction.Ctl_FormDetail.updateAllAnswers}';
+	sfEnv.VFR.lockForm = '{!$RemoteAction.Ctl_FormDetail.lockForm}';
+	sfEnv.VFR.deleteForm = '{!$RemoteAction.Ctl_FormDetail.deleteForm}';
+	sfEnv.VFR.archiveForm = '{!$RemoteAction.Ctl_FormDetail.archiveForm}';
+	sfEnv.VFR.unarchiveForm = '{!$RemoteAction.Ctl_FormDetail.unarchiveForm}';
+	sfEnv.VFR.cloneForm = '{!$RemoteAction.Ctl_FormDetail.deepCloneForm}';
+	sfEnv.thisForm = JSON.parse('{!JSENCODE(thisFormJSON)}');
+	sfEnv.namespace = '{!JSENCODE(namespace)}';
+	sfEnv.formId = '{!JSENCODE(formID)}';
+	sfEnv.isFormDetail = true;
+	sfEnv.formListViewID = '{!JSENCODE(formListViewID)}';
+	sfEnv.formObjectPrefix = '{!JSENCODE(formObjectPrefix)}';
+	sfEnv.SLDS_PATH = '{!JSENCODE($Resource.SLDS100)}';
+	sfEnv.hasDiscoveries = '{!JSENCODE(IF(hasDiscoveries,"true","false"))}';
+	sfEnv.formIsLocked = '{!JSENCODE(IF(formIsLocked,"true","false"))}' == "true" ? true : false;
+	sfEnv.isConsole = (sforce.hasOwnProperty('console') && sforce.console.isInConsole()) ? true : false;
+	sfEnv.isLightningExp = (sforce !== undefined && sforce.hasOwnProperty('one')) ? true : false;
+	sfEnv.isLightningComp = false;
+	
+	/*** Made global for mobile ***/
+	sfEnv.isMobileApp = false;
+	sfEnv.fieldLinkUpdateArray = [];
+	/******/
+
+	sfEnv.countryPickLists = '{!JSENCODE(IF(countryPickListsOn,"true","false"))}' == "true" ? true : false;
+
+	$(document).ready(function() {
+		$('.controls select[multiple]').each(function(index, el) {
+			$(el).prop('size',$(el).find('option').length);
+			$(el).css('max-height','100%');
+		});
+		
+		// Init photo gallery with $Resource.lightgallery
+		$(".gallery-scroll-view").lightGallery();
+	});
+	</script>
+	<style>
+	.hiddenEl { display:none;}
+	.shownEl {display:inline;}
+	.btn {width:140px !important;} /* needs to be wider for process problems btn */
+	/*.multiselectWrapper {
+		overflow-x: hidden;
+		overflow-y: scroll;
+		width:98%;
+		max-width:250px;
+		height:100px;
+	}*/
+	.currentPageContainer { padding-top:0;} /* override style for extra padding above form */
+
+	/* OVERRIDES TO FORCE STYLES BACK TO SF STYLES OUTSIDE COMPLETE FORM*/
+	h2 {
+		font-size:14px;
+		margin:0 !important;
+	}
+	body {
+		font-size:12px !important;
+	}
+	/* reset override set by bootstrap*/
+	* {
+		box-sizing: content-box;
+	}
+	/* re-add style scoped to our page*/
+	#ourPage {
+		box-sizing: border-box;
+	}
+	/* keeps inputs on the same row as required bar when required present */
+	.controls {
+		display:flex;
+	}
+	.controls-table tr td {
+		display:flex;
+	}
+	/* align answer output with question label */
+	p.inputReplace {
+		margin: 5px 0 0 5px;
+	}
+
+	.buttons {
+		position: relative;
+	}
+
+	.buttons #edit-properties {
+		position: absolute;
+		right:0;
+		border:none;
+	}
+
+	.buttons #edit-properties:hover {
+		background-color:inherit;
+		text-decoration:underline;
+	}
+
+	/* for State/Country Field Link Field Type error messages */
+	.error-text {
+		color:#df0033; /*same as @cancel-go-back in site.less */
+		background-color:#F4F6F9;
+		border-radius: 4px;
+		border: 1px solid #d8dde6;
+		padding: 6px;
+		text-align:center;
+	}
+
+	.state-country-invalid {
+		font-weight: 300;
+	    font-size: 24px;
+	    line-height: 1.25;
+	}
+
+	.state-country-container {
+		max-width: 1000px;
+		margin: 0 auto;
+	}
+
+	/* Style to overside slds to disable the button, which is really a link */
+	.disabled-slds-btn {
+		background-color: #fff !important;
+		cursor: default !important;
+		color: #d8dde6 !important;
+		pointer-events: none;
+	}
+	
+	#lightgallery {
+		max-height: 110px;
+		overflow: auto;
+		white-space: nowrap;
+	}
+	#lightgallery img {
+		max-height: 75px;
+	}
+    .disabled-control-color{
+        background-color: #e0e5ee!important;
+        min-height: 35px;
+		word-wrap: break-word;     
+		white-space:pre-wrap;  
+    }
+
+    .slds-form-element {
+    	width:100%;
+    }
+    .slds .slds-card__body .disco-table .wrapping-cell {
+    	white-space: pre-wrap;
+    }
+	</style>
+</head>
+<body id="ourPage">
+	<div>
+		<div class="slds">
+			<apex:pageMessages />
+			<apex:outputPanel rendered="{!yourekaDisabled}">
+				<c:YourekaDisabled messageText="{!yourekaDisabledMessage}"/>
+			</apex:outputPanel>
+		</div>
+
+		<apex:outputPanel rendered="{!NOT(yourekaDisabled)}">
+			<!-- chatter box -->
+			<div>
+				<chatter:feedWithFollowers entityId="{!formId}"/>
+			</div>
+
+			<div class="slds containerBox js-form" id="completeFormPage">
+				<!-- Saving Modal -->
+				<div id="savingStatus" class="slds-modal slds-fade-in-open" aria-hidden="false" role="dialog" style="display:none;">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="slds-modal__content slds-p-around--medium OR-modal__content">
+							<div class="slds-spinner--large OR-spinner-align--center slds-m-top--large">
+					          <img src="{!JSENCODE($Resource.SLDS100) + '/assets/images/spinners/slds_spinner_brand.gif'}" alt="Saving..." />
+					        </div>
+					        <h3 class="saveText modal-title slds-text-heading--medium slds-m-top--large slds-text-align--center slds-m-bottom--large"></h3>
+						</div>
+					</div>
+				</div>
+				<div class="slds-backdrop slds-backdrop--closed"></div>
+				<!-- END Saving Modal -->
+				
+				<form class="form-horizontal" id="mainForm">
+					<span class="{!IF(showUnArchiveForm,'shownE2','hiddenEl')}" id="ArchiveHeader">
+						<h2 class="slds-text-heading--medium error">
+							Form has been archived
+						</h2>
+						<br/>
+					</span>
+
+					<div class="buttons" >
+						<span class="{!IF(showEditBtn,'shownEl','hiddenEl')}">
+							<a href="#" id="cfBtn" class="slds-button slds-button--brand">Edit</a>
+						</span>
+
+ 						<span class="{!IF(AND(showLockForm,showForm),'shownEl','hiddenEl')}">
+							<a href="#" id="lockBtn" class="slds-button slds-button--neutral" type="button">Lock</a>
+						</span>
+ 
+ 						<span class="{!IF(AND(showProcessDiscoveries,showForm),'shownEl','hiddenEl')}">
+							<a href="#" id="makeDiscoveriesBtn" class="slds-button slds-button--neutral" type="button">Make Discoveries</a>
+						</span>
+
+						<span class="{!IF(AND(showArchiveForm,!showLockForm),'shownEl','hiddenEl')}">
+							<a href="#" id="archiveBtn" class="slds-button slds-button--neutral">Archive</a>
+						</span>
+						<span class="{!IF(AND(showArchiveForm,showLockForm),'shownEl','hiddenEl')}">
+							<a href="#" id="lockArchiveBtn" class="slds-button slds-button--neutral">Archive</a>
+						</span>
+						<span class="{!IF(showUnArchiveForm,'shownEl','hiddenEl')}">
+							<a href="#" id="unarchiveBtn" class="slds-button slds-button--neutral">Unarchive</a>
+						</span>
+						<!-- dont show clone if form is archived -->
+						<span class="{!IF(showArchiveForm,'showEl','hiddenEl')}">
+							<a href="#" id="cloneBtn" class="slds-button slds-button--neutral">Clone</a>
+						</span>
+						<a href="#" id="deleteBtn" class="slds-button slds-button--neutral" type="button">Delete</a>
+						<a href="#" id="edit-properties"
+							class="{!IF(showEditProperties,'slds-button slds-button--neutral','hiddenEl')}">Edit Properties</a>
+<!-- 						
+						<a id="edit-properties" href="/{!formId}/e?retURL=/{!formId}" class="slds-button slds-button--neutral">Edit Properties</a>
+ -->					</div>
+
+					<!-- warning message if premium will expire -->
+					<c:PremiumExpiration />
+
+					<apex:outputPanel layout="none" rendered="{!NOT(ISNULL(saveError))}">
+						<div class="slds-text-heading--medium slds-m-vertical--medium slds-box slds-theme--shade" >
+							<h1 style="color:red;"><apex:outputText value="{!saveError}"/></h1>
+						</div>
+					</apex:outputPanel>
+
+					<!-- all attachments -->
+					<apex:outputPanel layout="none" rendered="{!NOT(allAttachments.empty)}">
+						<h3 style="display:block;font-size:18px;">Attachments</h3>
+						<div id="lightgallery" class="slds-box slds-m-top--large">
+							<div class="gallery-scroll-view">
+								<apex:repeat value="{!allAttachments}" var="attachment">
+									<a data-src="/servlet/servlet.FileDownload?file={!attachment.id}">
+										<apex:image url="/servlet/servlet.FileDownload?file={!attachment.id}"/>
+									</a>
+								</apex:repeat>
+							</div>
+						</div>
+					</apex:outputPanel>
+
+					<!-- display Discoveries after they have been created -->
+					<apex:outputPanel layout="none" rendered="{!NOT(createdDiscoveries.empty)}">
+						<div class="slds-card card-background--dark slds-m-top--medium">
+							<div class="slds-card__header slds-grid">
+								<div class="slds-media slds-media--center slds-has-flexi-truncate">
+									<div class="slds-media__body">
+										<h2 class="slds-text-heading--small slds-truncate text-left-align">Discoveries created from this form:</h2>
+									</div>
+								</div>
+							</div>
+							<div class="slds-card__body">
+								<table class="slds-table slds-table--bordered slds-max-medium-table--stacked-horizontal slds-no-row-hover">
+									<thead>
+										<tr>
+											<th class="slds-text-heading--label" scope="col">#</th>
+											<th class="slds-text-heading--label" scope="col">Name</th>
+											<th class="slds-text-heading--label" scope="col">Description</th>
+										</tr>
+									</thead>
+									<tbody class="disco-table">
+										<apex:variable value="1" var="num"/>
+											<apex:repeat value="{!createdDiscoveries}" var="disco">
+											<tr class="slds-hint-parent">
+												<td class="" data-label="Number">
+													<apex:outputText value="{!num}"/>
+												</td>
+												<td class="wrapping-cell" data-label="Name">
+													<apex:outputLink value="/{!disco.Id}">
+														<apex:outputText value="{!disco.name}"/>
+													</apex:outputLink>
+												</td>
+												<td class="wrapping-cell" data-label="Description">
+													<apex:outputText value="{!disco.disco__Description__c}"/>
+												</td>
+											</tr>
+											<apex:variable var="num" value="{!VALUE(num) + 1}"/>
+										</apex:repeat>
+									</tbody>
+								</table>
+							</div>
+							<div class="slds-card__footer slds-m-top--small"></div>
+						</div>
+					</apex:outputPanel>
+					<apex:outputPanel layout="block" styleClass="currentPageContainer" rendered="{!showForm}">
+						
+						<div class="slds-box slds-theme--info slds-theme--alert-texture slds-m-top--medium" role="alert" id="loadingMessage">
+							<h2>Loading...</h2>
+						</div>
+						<div class="slds-box slds-theme--error slds-theme--alert-texture slds-m-top--medium slds-m-bottom--x-large js-no-sections" role="alert" style="display:none;">
+							<h2>No sections added to this form.</h2>
+						</div>
+						<div id="formContent">
+							<!-- javascript inserts form content -->
+						</div>
+						
+					</apex:outputPanel>
+				</form>
+			</div>
+		</apex:outputPanel>
+	</div>
+	
+	<!-- confirmation modal for locking form -->
+	<div class="slds">
+		<div class="slds-hide modal js-confirm-modal">
+			<div class="slds-modal slds-fade-in-open" aria-hidden="false" role="dialog">
+
+				<!-- lock form modal -->
+				<div id="lock-confirm-modal" class="slds-hide js-modal-content">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="modal-header slds-modal__header">
+							<h3 class="modal-title slds-text-heading--small OR-modal-heading">Lock Form <span class="js-error-title slds-hide">Error</span></h3>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-standard-text">Locking the form will disable the edit button blocking further updates to the form. It will also allow discoveries to be created for this form.</div>
+						<div class="slds-modal__content slds-p-around--medium js-error-text slds-hide"></div>
+						<div class="slds-modal__footer">
+							<div class="slds-x-small-buttons--horizontal">
+								<button class="slds-button slds-button--neutral" id="cancel-lock-modal" type="button">
+									Cancel
+								</button>
+								<button class="slds-button slds-button--neutral slds-button--brand" id="confirm-lock-modal" type="button">
+									Lock
+								</button>
+								<div class="slds-spinner_container slds-hide">
+								    <div class="slds-spinner--brand slds-spinner slds-spinner--small" aria-hidden="false" role="alert">
+								        <div class="slds-spinner__dot-a"></div>
+								        <div class="slds-spinner__dot-b"></div>
+								    </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- clone form modal -->
+				<div id="clone-modal" class="slds-hide js-modal-content">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="modal-header slds-modal__header">
+							<h3 class="modal-title slds-text-heading--small OR-modal-heading">
+								Clone Form <span class="js-error-title slds-hide">Error</span>
+							</h3>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-standard-text">
+							Cloning the form will create a new copy of the form with the same answers.
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-error-text slds-hide"></div>
+						<div class="slds-modal__footer">
+							<div class="slds-x-small-buttons--horizontal">
+								<button class="slds-button slds-button--neutral" id="cancel-clone-modal" type="button">
+									Cancel
+								</button>
+								<button class="slds-button slds-button--neutral slds-button--brand" id="confirm-clone-modal" type="button">
+									Clone
+								</button>
+								<div class="slds-spinner_container slds-hide">
+								    <div class="slds-spinner--brand slds-spinner slds-spinner--small" aria-hidden="false" role="alert">
+								        <div class="slds-spinner__dot-a"></div>
+								        <div class="slds-spinner__dot-b"></div>
+								    </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- make discoveries modal  -->
+				<div id="md-lock-confirm-modal" class="slds-hide js-modal-content">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="modal-header slds-modal__header">
+							<h3 class="modal-title slds-text-heading--small OR-modal-heading">Lock Form <span class="js-error-title slds-hide">Error</span></h3>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-standard-text">In order to make discoveries, the form will locked. Locking the form will disable the edit button blocking further updates to the form.</div>
+						<div class="slds-modal__content slds-p-around--medium js-error-text slds-hide"></div>
+						<div class="slds-modal__footer">
+							<div class="slds-x-small-buttons--horizontal">
+								<button class="slds-button slds-button--neutral" id="md-cancel-lock-modal" type="button">
+									Cancel
+								</button>
+								<button class="slds-button slds-button--neutral slds-button--brand" id="md-confirm-lock-modal" type="button">
+									Lock and Make Discoveries
+								</button>
+								<div class="slds-spinner_container slds-hide">
+								    <div class="slds-spinner--brand slds-spinner slds-spinner--small" aria-hidden="false" role="alert">
+								        <div class="slds-spinner__dot-a"></div>
+								        <div class="slds-spinner__dot-b"></div>
+								    </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- delete form modal -->
+				<div id="delete-modal" class="slds-hide js-modal-content">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="modal-header slds-modal__header">
+							<h3 class="modal-title slds-text-heading--small OR-modal-heading">Delete Form <span class="js-error-title slds-hide">Error</span></h3>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-standard-text" >Are you sure you want to delete this Form?</div>
+						<div class="slds-modal__content slds-p-around--medium js-error-text slds-hide"></div>
+						<div class="slds-modal__footer">
+							<div class="slds-x-small-buttons--horizontal">
+								<button class="slds-button slds-button--neutral" id="cancel-delete-modal" type="button">
+									Cancel
+								</button>
+								<button class="slds-button slds-button--neutral slds-button--brand" id="confirm-delete-modal" type="button">
+									Delete
+								</button>
+								<div class="slds-spinner_container slds-hide">
+								    <div class="slds-spinner--brand slds-spinner slds-spinner--small" aria-hidden="false" role="alert">
+								        <div class="slds-spinner__dot-a"></div>
+								        <div class="slds-spinner__dot-b"></div>
+								    </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- archive modal -->
+				<div id="archive-modal" class="slds-hide js-modal-content">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="modal-header slds-modal__header">
+							<h3 class="modal-title slds-text-heading--small OR-modal-heading">Archive Form <span class="js-error-title slds-hide">Error</span></h3>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-standard-text">Archiving the form will save space but reports and workflows on Answers will not include Answers on this form. Do you want to proceed?</div>
+						<div class="slds-modal__content slds-p-around--medium js-error-text slds-hide"></div>
+						<div class="slds-modal__footer">
+							<div class="slds-x-small-buttons--horizontal">
+								<button class="slds-button slds-button--neutral" id="cancel-archive-modal" type="button">
+									Cancel
+								</button>
+								<button class="slds-button slds-button--neutral slds-button--brand" id="confirm-archive-modal" type="button">
+									Archive
+								</button>
+								<div class="slds-spinner_container slds-hide">
+								    <div class="slds-spinner--brand slds-spinner slds-spinner--small" aria-hidden="false" role="alert">
+								        <div class="slds-spinner__dot-a"></div>
+								        <div class="slds-spinner__dot-b"></div>
+								    </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- lock and archive modal -->
+				<div id="lock-archive-modal" class="slds-hide js-modal-content">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="modal-header slds-modal__header">
+							<h3 class="modal-title slds-text-heading--small OR-modal-heading">Archive Form <span class="js-error-title slds-hide">Error</span></h3>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-standard-text">Archiving the form will save space but reports and workflows on Answers will not include Answers on this form. Archiving the form also automatically locks the form, thereby disabling the edit button which blocks further updates to the form. Do you want to proceed? </div>
+						<div class="slds-modal__content slds-p-around--medium js-error-text slds-hide"></div>
+						<div class="slds-modal__footer">
+							<div class="slds-x-small-buttons--horizontal">
+								<button class="slds-button slds-button--neutral" id="cancel-lock-archive-modal" type="button">
+									Cancel
+								</button>
+								<button class="slds-button slds-button--neutral slds-button--brand" id="confirm-lock-archive-modal" type="button">
+									Archive
+								</button>
+								<div class="slds-spinner_container slds-hide">
+								    <div class="slds-spinner--brand slds-spinner slds-spinner--small" aria-hidden="false" role="alert">
+								        <div class="slds-spinner__dot-a"></div>
+								        <div class="slds-spinner__dot-b"></div>
+								    </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- unarchive modal -->
+				<div id="unarchive-modal" class="slds-hide js-modal-content">
+					<div class="slds-modal__container OR-modal-margin">
+						<div class="modal-header slds-modal__header">
+							<h3 class="modal-title slds-text-heading--small OR-modal-heading">Unarchive Form <span class="js-error-title slds-hide">Error</span></h3>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium js-standard-text" >This form was archived to save space. Do you want to unarchive anyway?</div>
+						<div class="slds-modal__content slds-p-around--medium js-error-text slds-hide"></div>
+						<div class="slds-modal__footer">
+							<div class="slds-x-small-buttons--horizontal">
+								<button class="slds-button slds-button--neutral" id="cancel-unarchive-modal" type="button">
+									Cancel
+								</button>
+								<button class="slds-button slds-button--neutral slds-button--brand" id="confirm-unarchive-modal" type="button">
+									Unarchive
+								</button>
+								<div class="slds-spinner_container slds-hide">
+								    <div class="slds-spinner--brand slds-spinner slds-spinner--small" aria-hidden="false" role="alert">
+								        <div class="slds-spinner__dot-a"></div>
+								        <div class="slds-spinner__dot-b"></div>
+								    </div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="slds-backdrop slds-backdrop--closed"></div>
+		</div>
+	</div>
+	<script type='text/javascript' src='{!$Resource.formDisplayAppBundle_js}'></script> 	
+	<!-- Using apex:include loads the file too quickly -->
+	<!-- <script src="https://localhost:9005/formDisplayApp/dist/bundle.js"></script> -->
+ </body>
+	
+</apex:page>

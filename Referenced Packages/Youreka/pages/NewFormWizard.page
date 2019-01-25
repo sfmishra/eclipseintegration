@@ -1,0 +1,343 @@
+<apex:page showHeader="true" sidebar="true" standardController="disco__Form__c" extensions="disco.Ctl_NewForm" applyBodyTag="false" docType="html-5.0" action="{!checkDisabled}">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<apex:styleSheet value="{!URLFOR($Resource.disco__jquerymodal, '/jquerymodal/jquery.modal.css')}" />
+	<apex:includeScript value="{!$Resource.disco__jquery2_0_0}"/>
+	<apex:includeScript value="{!URLFOR($Resource.disco__jquerymodal, '/jquerymodal/jquery.modal.js')}"/>
+<apex:styleSheet value="{!URLFOR($Resource.disco__SLDS100, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+<head>
+	<meta http-equiv="x-ua-compatible" content="ie=edge"/>
+	<title>New {!thisForm.name}</title>
+	<!-- Lightning Design -->
+	<style>
+	/* override position from SLDS style */
+	.slds-notify_container.slds-notify_container-OR {
+		position:static;
+	}
+	.slds .slds-notify--alert-OR {
+		padding:0; /* removed padding so it will be invisible when there are no messages */
+	}
+
+	.wideInput{
+		width: 400px;
+	}
+
+
+	.slds-grid-OR {
+		display:block !important;
+		margin-top:20px; /* not an override */
+	}
+
+	.slds-col--padded-OR {
+		display:inline-block !important;
+		width:33%; /* 33.33 (repeating of course) wraps for some reason */
+		vertical-align: top; /* not an actual override */
+		padding-bottom: 10px;  /*  an actual override */
+	}
+	/* Styling for the CRUD/FLS error */
+	.page-error-cont {
+		text-align: center;
+		width: 400px;
+		max-width:90%;
+		margin: 40px auto;
+		padding: 20px;
+		background-color: #353f54;
+		color: #fff;
+		border-radius: 10px;
+	}
+
+	.page-error-cont button {
+		color: #353f54;
+		margin-top: 10px;
+	}
+	.page-error-cont button:hover {
+		background-color: #F4F6F9;
+	}
+	.modal{
+		border-radius: 4px;
+	}
+	.errorMsg{
+		width: 400px;
+	}
+	</style>
+	<script>
+	var templateID = '{!JSENCODE(templateID)}';
+	var formID = '{!JSENCODE(thisForm.ID)}';
+	var retURL = '{!JSENCODE(retURL)}';
+	var isLightningExp = typeof sforce !== 'undefined';
+	var yourekaDisabled = '{!yourekaDisabled}';
+
+	
+	/* returns to form template */
+	function goToTemplate() {
+		if (isLightningExp) {
+			sforce.one.navigateToSObject(templateID,'detail');
+		}
+		else {
+			window.location.href = '/templateID';
+		}
+	}
+
+
+   	/* go back */
+	function goBack(){
+		if (isLightningExp){
+			sforce.one.back();
+		}
+		else{
+			window.location.href= retURL;
+		}
+	}
+
+	var modalStyle = {
+			  escapeClose: false,
+			  clickClose: false,
+			  showClose: false,
+			  closeExisting: true
+			};
+
+	
+
+
+	/* show select Tempate modal */
+	function selectTemplateModal() {
+		 
+		$('#selectTemplateModal').modal(modalStyle);
+	}
+
+
+	/*select additional fields modal */
+	function additionalFieldsModal(){		
+		$('#additionalFieldsModal').modal(modalStyle);
+	}
+
+	
+	/*select form detail or complete form - no in use at this time but may come back
+	function selectOutModal(){
+		$('#viewOrCompleteModal').modal(modalStyle);	
+	}
+	*/
+
+
+
+	function goToAdditionalFields(){	
+		additionalFieldsModal();
+	}
+
+	/* not in use at this time - select view or complete with nothing else showing 
+	function gotoSelectOut(){
+		var templateModal = $('#selectTemplateModal').data('modal');
+		if (templateModal != null){
+			templateModal.close();	
+		} 
+		selectOutModal();
+	}
+	*/
+	
+	/* select template, or fill in additional fields */
+	function showAppropriateModal()	{
+		templateID = '{!JSENCODE(templateID)}';
+	 	if (templateID===null || templateID===''){
+	 		selectTemplateModal();
+	 	}
+	 	else{
+	 		
+	 		if (formID!=null && formID != ''){
+	 		/* not in use. saving form redirects directly to FormDetail, we never get here
+	 			gotoSelectOut();
+	 		*/
+	 		}
+	 		else{ 				 		
+	 			goToAdditionalFields();
+		 	}
+		 }
+	}	
+	</script>
+		
+
+
+</head>
+<body>
+<apex:form >
+	<apex:outputPanel layout="block" styleClass="slds" id="outermostPanel">
+
+
+		<apex:outputPanel layout="none" >
+			<!-- display handled errors -->
+			<div class="slds-notify_container slds-notify_container-OR">
+				<div class="slds-notify slds-notify--alert slds-notify--alert-OR slds-theme--error slds-theme--alert-texture" role="alert">
+					<span class="slds-assistive-text">Info</span>
+				</div>
+			</div>
+
+			<!--- disabled background -->		
+			<!-- PAGE HEADER -->
+			<div class="slds-page-header" role="banner">
+				<div class="slds-grid">
+					<div class="slds-col">
+						<div class="slds-media">
+							<div class="slds-media__figure">
+								<!-- Alternative to using an SVG because svg4everybody doesn't play well with the apex:actionregion-->
+								<img src="{!URLFOR($Resource.description_icon_png)}" class="slds-icon slds-icon-text-default slds-icon--large"/>
+							</div>
+							<apex:outputPanel styleClass="slds-media__body" layout="block" id="headingText">
+								<h1 class="slds-text-heading--medium">
+									New Form 
+									<apex:outputPanel rendered="{!thisTemplate.name!=null}" layout="none">
+										for&nbsp;<apex:outputText value="{!thisTemplate.name}"/>
+									</apex:outputPanel>
+								</h1>
+							</apex:outputPanel>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<apex:outputPanel id="mainContent">
+
+				<!-- / Template Selection -->
+				<div class="slds-hide  modal" id="selectTemplateModal">
+								
+					<div class="slds-card modal-header slds-modal__header">
+						<apex:pageMessages rendered="{!showError}"/>
+						<div class="slds-card__header slds-grid">
+							<h2 class="slds-text-heading--small">Select a Form Template</h2>
+						</div>
+					</div>
+					<div class="slds-card__body modal_body">
+						<div class="slds-col--padded slds-col--padded-OR">
+							<dl>
+								<dt>
+									<p class="slds-text-heading--label ">
+										<abbr class="slds-required" title="required">*</abbr>
+										<apex:outputText value="Form Template" />
+									</p>
+								</dt>
+								<dd>
+									<apex:inputField value="{!thisForm.disco__Form_Template__c}" styleClass="wideInput"/>
+								</dd>
+							</dl>
+						</div>
+					</div>
+					<div class="slds-modal__footer">
+						<apex:outputPanel >
+							<button class="slds-button slds-button--neutral" onClick="goBack();" type="button">
+							Back
+							</button>
+							<apex:commandButton value="Next"    styleClass="slds-button slds-button--brand"
+									action="{!seeIfYouWantToKeepTheForm}"/>
+						</apex:outputPanel>
+						
+					</div>
+				</div>
+				
+				<!-- / select view or complete form -- this isn't in use at the moment, 
+					but we wanted to keep it available until we are really sure we don't want it -->
+				<div class="slds-hide  modal" id="viewOrCompleteModal">
+					<div class="slds-card modal-header slds-modal__header">
+						<div class="slds-card__header slds-grid">
+							<h2 class="slds-text-heading--small">Your Form has been created!</h2>
+						</div>
+					</div>
+					<div class="slds-card__body">
+					</div>
+					<div class="slds-modal__footer">
+						<apex:outputPanel >
+							<button class="slds-button slds-button--neutral" onClick="goBack();" type="button">
+							Back
+							</button>
+							<apex:commandButton value="View the New Form"   reRender="outermostPanel" styleClass="slds-button slds-button--neutral"
+										action="{!goToFormDetail}" />
+							<apex:commandButton value="Complete the New Form"  styleClass="slds-button slds-button--brand"
+										action="{!gotoCompleteForm}" />
+
+							</apex:outputPanel>
+					</div>
+				</div>
+
+				<!-- / required and field set fields -->
+				<div class="slds-hide  modal" id="additionalFieldsModal">
+					<div class="slds-card ">
+						<apex:pageMessages rendered="{!showError}"/>
+											
+						<apex:outputPanel layout="block" styleClass="slds-card" rendered="{!NOT(requiredFormFieldsList.empty)&&hasCRUDFLS}">
+							<div class="slds-card__header slds-grid modal-header slds-modal__header">
+								<h2 class="slds-text-heading--small">Template Required Fields</h2>
+							</div>
+							<div class="slds-card__body slds-modal__body">
+								<apex:repeat value="{!requiredFormFields}" var="fieldName">
+									<div class="slds-col--padded slds-col--padded-OR">
+										<dl>
+											<dt>
+												<p class="slds-text-heading--label ">
+													<abbr class="slds-required" title="required">*</abbr>
+													<apex:outputText value="{!$ObjectType.disco__Form__c.fields[fieldName].Label}"/>
+												</p>
+											</dt>
+											<dd>
+												<apex:inputField required="true" value="{!thisForm[fieldName]}" styleClass="wideInput" />
+											</dd>
+										</dl>
+									</div>
+									<br/>
+								</apex:repeat>
+							</div>
+						</apex:outputPanel>
+						<apex:outputPanel layout="block"  rendered="{!NOT(filteredFieldsetFields.empty)&&hasCRUDFLS}">
+							<div class="slds-card__header slds-grid">
+								<h2 class="slds-text-heading--small">Additional Fields</h2>
+							</div>
+							<div class="slds-card__body slds-modal__body">
+								<apex:repeat value="{!filteredFieldsetFields}" var="fieldName">
+									<div class="slds-col--padded slds-col--padded-OR">
+										<dl>
+											<dt>
+												<p class="slds-text-heading--label ">
+													<apex:outputPanel layout="none" rendered="{!OR(fieldName.required,fieldName.dbrequired)}">
+														<abbr class="slds-required" title="required">*</abbr>
+													</apex:outputPanel>
+													<apex:outputText value="{!fieldName.Label}"/>
+												</p>
+											</dt>
+											<dd>
+												<apex:inputField required="{!OR(fieldName.required,fieldName.dbrequired)}" value="{!thisForm[fieldName]}" styleClass="wideInput"/>
+											</dd>
+										</dl>
+									</div>
+									<br/>
+								</apex:repeat>
+							</div>						
+						</apex:outputPanel>
+						<div class="slds-modal__footer">
+							<apex:outputPanel >
+								<button class="slds-button slds-button--neutral" onClick="goBack();" type="button">
+								Cancel
+								</button>
+								<apex:commandButton value="Save the New Form"   reRender="outermostPanel" styleClass="slds-button slds-button--neutral"
+											action="{!goToFormDetail}" status="goToSpinner" rendered="{!hasCRUDFLS}"/>
+								<apex:commandButton value="Complete the New Form" reRender="outermostPanel" styleClass="slds-button slds-button--brand"
+											action="{!gotoCompleteForm}" status="goToSpinner" rendered="{!hasCRUDFLS}"/>
+							</apex:outputPanel>
+							<apex:actionStatus id="goToSpinner" layout="block">
+								<apex:facet name="start">
+									<div class="slds-spinner_container">
+				                        <div class="slds-spinner--brand slds-spinner slds-spinner--large" aria-hidden="false" role="alert">
+				                            <div class="slds-spinner__dot-a"></div>
+				                            <div class="slds-spinner__dot-b"></div>
+				                        </div>
+				                    </div>
+								</apex:facet>
+							</apex:actionStatus>
+						</div>
+					</div>
+				</div>					
+			</apex:outputPanel>
+			
+		</apex:outputPanel>
+	<script type="text/javascript">
+	showAppropriateModal();
+	</script>
+	</apex:outputPanel>
+</apex:form>
+</body>
+</html>
+</apex:page>
